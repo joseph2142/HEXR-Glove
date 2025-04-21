@@ -1,4 +1,27 @@
 class Haptics:
+
+    from enum import Enum
+
+    class FunIndex(Enum):
+        FI_AIR_PRESSURE = 0x01
+        FI_STABLE_PRESSURE_CTRL = 0x02
+        FI_SET_PRESSURE_DEPRECATED = 0x03
+        FI_SET_PRESSURE = 0x04
+        FI_SET_PID = 0x05
+        FI_SET_BATTERY_LED = 0x06
+        FI_SET_VIBRATION = 0x07
+        FI_SET_PULSE = 0x08
+        FI_SET_VIB_SPEED = 0x09
+        FI_SET_PULSE_SPEED = 0x0a
+
+    class Finger(Enum):
+        Thumb = 0
+        Index = 1
+        Middle = 2
+        Ring = 3
+        Pinky = 4
+        Palm = 5
+
     def __init__(self, whichHand):
         self.whichHand = whichHand
         self.buffer = bytearray(1024)
@@ -8,6 +31,7 @@ class Haptics:
         self.pressureData = [0] * 7
         self.flag_MicrotubeDataReady = False
         self.flag_pressureDataReady = False
+        self.encode = Encode()  # Assuming Encode is a class with an instance method
 
     @staticmethod
     def get_ghost_finger_name(buf):
@@ -100,31 +124,28 @@ class Haptics:
 
         return num_array
 
-    # def apply_haptics(self, clutch_state, target_pres, compensate_hysteresis):
-    #     if not self.is_hand_valid(self.whichHand):
-    #         print(f"Invalid hand name: {self.whichHand}")
-    #         return None
-    #
-    #     frequency = 0xFF if 0 < target_pres < 10 else 0
-    #     pres_source = self.pressureData[5]
-    #
-    #     valve_timing = HaptGloveValvesCalibrationData.calculate_valve_timing(target_pres, clutch_state[0], pres_source,
-    #                                                                          self.whichHand)
-    #     if clutch_state[0] != 0xFF and clutch_state[1] != 0xFF:
-    #         n1, n2 = valve_timing
-    #         Encode.instance().add_u8(frequency)
-    #         Encode.instance().add_u8(clutch_state[0])
-    #         Encode.instance().add_u8(clutch_state[1])
-    #         Encode.instance().add_u8(target_pres)
-    #         Encode.instance().add_u8(n1)
-    #         Encode.instance().add_u8(n2)
-    #         Encode.instance().add_b1(compensate_hysteresis)
-    #         data = Encode.instance().add_fun(0x03)
-    #         Encode.instance().clear_list()
-    #         print("Thumb data", data)
-    #         return data
-    #     else:
-    #         return None
+    def set_haptics_state(self, finger, state):
+        haptics_state = [0, 0]
+        if state:
+            haptics_state = [finger.value, 0]
+        else:
+            haptics_state = [finger.value, 2]
+    
+        return haptics_state
+
+
+    def set_haptics_state_multiple(self, fingers, states):
+        haptics_states = []
+    
+        for i in range(len(fingers)):
+            if states[i]:
+                haptics_states.append([fingers[i].value, 0])
+            else:
+                haptics_states.append([fingers[i].value, 2])
+    
+        return haptics_states
+
+
     @staticmethod
     def air_pressure_source_control(airPresSourceCtrlStarted, sourcePres):
         try:
@@ -158,6 +179,29 @@ class Haptics:
 
         except Exception as e:
             print(f"Error: {e}")
+
+    def hexr_pressure(self, finger, state, intensity, speed):
+        haptics_state = self.set_haptics_state(finger, state)
+
+        frequency = 0
+        self.encode.add_f32(frequency)
+        self.encode.add_u8(haptics_state[0])  # which finger
+        self.encode.add_u8(haptics_state[1])  # enter, stay or exit
+
+        pressure = self.liner_mapping(0.1, 1.0, intensity, 15, 50)
+        self.encode.add_f32(pressure)
+
+        speed = self.clamp(0.1, 1.0, speed)
+        speed = self.liner_mapping(0.1, 1.0, speed, 0.1, 1.0)
+        speed *= 100
+        self.encode.add_u8(int(speed))
+
+        data = self.encode.add_fun(4)  # FI = 4, equivalent to Haptics.FunIndex.FI_SET_PRESSURE
+        self.encode.clear_list()
+
+        print(f"Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
+
+        return data
 
     def apply_haptics(self, clutchState, targetPres, compensateHysteresis):
         if not Haptics.is_hand_valid(self.whichHand):
@@ -230,12 +274,28 @@ class Haptics:
             self.fingerPositionData[i] = int.from_bytes(frame[3 + i * 5:8 + i * 5], byteorder="little", signed=True)
         self.flag_MicrotubeDataReady = True
 
+    def clamp(self, lower, upper, input):
+        if input > upper:
+            return upper
+        elif input < lower:
+            return lower
+        else:
+            return input
+
+    def liner_mapping(self, pre_bound1, pre_bound2, input, bound1, bound2):
+        if pre_bound2 == pre_bound1:
+            return 0
+
+        output = (bound2 - bound1) * (input - pre_bound1) / (pre_bound2 - pre_bound1) + bound1
+        return output
+
+import struct
 
 class Encode:
     _instance = None
-
+    
     @staticmethod
-    def instance():
+    def get_instance():
         if Encode._instance is None:
             Encode._instance = Encode()
         return Encode._instance
@@ -247,16 +307,74 @@ class Encode:
         self.list.clear()
 
     def add_fun(self, n):
-        length = len(self.list) + 2
-        self.list.insert(0, n)
-        self.list.insert(0, length)
-        return bytearray(self.list)
+        b = [0] * 2
+        b[0] = len(self.list) + 2
+        b[1] = n
+        self.list.insert(0, b[1])
+        self.list.insert(0, b[0])
+        return bytes(self.list)
 
     def add_u8(self, n):
-        self.list.extend([0x01, n])
+        b = [0x01, n]
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_u16(self, n):
+        b = [0x02, n % 256, n // 256]
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_u32(self, n):
+        b = [0x03]
+        for i in range(1, 5):
+            b.append(n % 256)
+            n = n // 256
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_u64(self, n):
+        b = [0x04]
+        for i in range(1, 9):
+            b.append(n % 256)
+            n = n // 256
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_i8(self, n):
+        b = [0x05, n]
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_i16(self, n):
+        b = [0x06] + list(n.to_bytes(2, byteorder='little'))
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_i32(self, n):
+        b = [0x07] + list(n.to_bytes(4, byteorder='little'))
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_i64(self, n):
+        b = [0x08] + list(n.to_bytes(8, byteorder='little'))
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_f32(self, n):
+        b = [0x09] + list(bytearray(struct.pack('<f', n)))
+        self.list.extend(b)
+        return bytes(self.list)
+
+    def add_d64(self, n):
+        b = [0x0a] + list(bytearray(struct.pack('<d', n)))
+        self.list.extend(b)
+        return bytes(self.list)
 
     def add_b1(self, n):
-        self.list.extend([0x11, 0x01 if n else 0x00])
+        b = [0x0b, 0x01 if n else 0x00]
+        self.list.extend(b)
+        return bytes(self.list)
+
 
 
 class HaptGloveValvesCalibrationData:
