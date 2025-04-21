@@ -181,27 +181,41 @@ class Haptics:
             print(f"Error: {e}")
 
     def hexr_pressure(self, finger, state, intensity, speed):
+        # Set the haptics state based on finger and state (enter, stay, exit)
         haptics_state = self.set_haptics_state(finger, state)
 
+        # Start encoding the pressure data
         frequency = 0
         self.encode.add_f32(frequency)
         self.encode.add_u8(haptics_state[0])  # which finger
         self.encode.add_u8(haptics_state[1])  # enter, stay or exit
 
+        # Calculate pressure from intensity and map it to the expected range
         pressure = self.liner_mapping(0.1, 1.0, intensity, 15, 50)
         self.encode.add_f32(pressure)
 
+        # Clamp the speed value and map it to the desired range
         speed = self.clamp(0.1, 1.0, speed)
-        speed = self.liner_mapping(0.1, 1.0, speed, 0.1, 1.0)
-        speed *= 100
+        speed = self.liner_mapping(0.1, 1.0, speed, 0.1, 1.0) * 100
         self.encode.add_u8(int(speed))
 
-        data = self.encode.add_fun(4)  # FI = 4, equivalent to Haptics.FunIndex.FI_SET_PRESSURE
-        self.encode.clear_list()
+        # Add function identifier (equivalent to Haptics.FunIndex.FI_SET_PRESSURE)
+        data = self.encode.add_fun(4)  # FI = 4
+        self.encode.clear_list()  # Clear the encoding list for the next operation
 
         print(f"Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
-
         return data
+
+    def hexr_pressure_multiple(self, fingers, states, intensities, speeds):
+        haptics_frame = []
+
+        # Process each finger's data using the hexr_pressure method
+        for finger, state, intensity, speed in zip(fingers, states, intensities, speeds):
+            haptics_data = self.hexr_pressure(finger, state, intensity, speed)
+            haptics_frame.extend(haptics_data)
+
+        # Return the full haptics frame as bytes
+        return bytes(haptics_frame)
 
     def apply_haptics(self, clutchState, targetPres, compensateHysteresis):
         if not Haptics.is_hand_valid(self.whichHand):
@@ -315,63 +329,63 @@ class Encode:
         return bytes(self.list)
 
     def add_u8(self, n):
-        b = [0x01, n]
+        b = [0x01, n]  # 0x01 is the header for u8
         self.list.extend(b)
         return bytes(self.list)
 
     def add_u16(self, n):
-        b = [0x02, n % 256, n // 256]
+        b = [0x02, n & 0xFF, (n >> 8) & 0xFF]  # Little-endian u16
         self.list.extend(b)
         return bytes(self.list)
 
     def add_u32(self, n):
         b = [0x03]
-        for i in range(1, 5):
-            b.append(n % 256)
-            n = n // 256
+        for i in range(4):
+            b.append(n & 0xFF)
+            n >>= 8
         self.list.extend(b)
         return bytes(self.list)
 
     def add_u64(self, n):
         b = [0x04]
-        for i in range(1, 9):
-            b.append(n % 256)
-            n = n // 256
+        for i in range(8):
+            b.append(n & 0xFF)
+            n >>= 8
         self.list.extend(b)
         return bytes(self.list)
 
     def add_i8(self, n):
-        b = [0x05, n]
+        b = [0x05, n]  # 0x05 is the header for i8
         self.list.extend(b)
         return bytes(self.list)
 
     def add_i16(self, n):
-        b = [0x06] + list(n.to_bytes(2, byteorder='little'))
+        b = [0x06] + list(n.to_bytes(2, byteorder='little', signed=True))  # Little-endian i16
         self.list.extend(b)
         return bytes(self.list)
 
     def add_i32(self, n):
-        b = [0x07] + list(n.to_bytes(4, byteorder='little'))
+        b = [0x07] + list(n.to_bytes(4, byteorder='little', signed=True))  # Little-endian i32
         self.list.extend(b)
         return bytes(self.list)
 
     def add_i64(self, n):
-        b = [0x08] + list(n.to_bytes(8, byteorder='little'))
+        b = [0x08] + list(n.to_bytes(8, byteorder='little', signed=True))  # Little-endian i64
         self.list.extend(b)
         return bytes(self.list)
 
     def add_f32(self, n):
-        b = [0x09] + list(bytearray(struct.pack('<f', n)))
+        b = [0x09] + list(bytearray(struct.pack('<f', n)))  # Little-endian f32
         self.list.extend(b)
         return bytes(self.list)
 
     def add_d64(self, n):
-        b = [0x0a] + list(bytearray(struct.pack('<d', n)))
+        b = [0x0a] + list(bytearray(struct.pack('<d', n)))  # Little-endian d64
         self.list.extend(b)
         return bytes(self.list)
 
     def add_b1(self, n):
-        b = [0x0b, 0x01 if n else 0x00]
+        b = [0x0b, 0x01 if n else 0x00]  # 0x0b is the header for bool
         self.list.extend(b)
         return bytes(self.list)
 

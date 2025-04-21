@@ -1,0 +1,10 @@
+2025-04-21 18:24:50,402 - INFO - Starting haptics control program
+2025-04-21 18:24:50,426 - INFO - Starting haptics control sequence
+2025-04-21 18:24:50,426 - INFO - Attempting to connect to BLE device at EC:C9:FF:45:92:86
+2025-04-21 18:24:51,929 - INFO - Successfully connected to EC:C9:FF:45:92:86
+2025-04-21 18:24:51,934 - INFO - Preparing air pressure source control data
+2025-04-21 18:24:51,934 - INFO - Writing air pressure control data to characteristic
+2025-04-21 18:24:51,957 - INFO - Successfully wrote air pressure control data
+2025-04-21 18:24:51,958 - INFO - Applying haptics to fingers
+2025-04-21 18:24:51,986 - INFO - Successfully applied haptics to EC:C9:FF:45:92:86
+2025-04-21 18:24:55,200 - INFO - Program completed successfully
