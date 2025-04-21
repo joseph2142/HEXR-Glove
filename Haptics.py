@@ -14,6 +14,14 @@ class Haptics:
         FI_SET_VIB_SPEED = 0x09
         FI_SET_PULSE_SPEED = 0x0a
 
+    from enum import Enum
+
+    class FunList(Enum):
+        FI_BMP280 = 0x01
+        FI_MICROTUBE = 0x04
+        FI_CLUTCHGOTACTIVATED = 0x05
+        FI_BATTERY = 0x06
+
     class Finger(Enum):
         Thumb = 0
         Index = 1
@@ -125,25 +133,16 @@ class Haptics:
         return num_array
 
     def set_haptics_state(self, finger, state):
+        # Initialize the list with 2 elements for finger and state
         haptics_state = [0, 0]
+    
+        # Check the state (True = entering, False = exiting)
         if state:
-            haptics_state = [finger.value, 0]
+            haptics_state = [finger, 0]  # Finger enters (0)
         else:
-            haptics_state = [finger.value, 2]
+            haptics_state = [finger, 2]  # Finger exits (2)
     
         return haptics_state
-
-
-    def set_haptics_state_multiple(self, fingers, states):
-        haptics_states = []
-    
-        for i in range(len(fingers)):
-            if states[i]:
-                haptics_states.append([fingers[i].value, 0])
-            else:
-                haptics_states.append([fingers[i].value, 2])
-    
-        return haptics_states
 
 
     @staticmethod
@@ -182,7 +181,8 @@ class Haptics:
 
     def hexr_pressure(self, finger, state, intensity, speed):
         # Set the haptics state based on finger and state (enter, stay, exit)
-        haptics_state = self.set_haptics_state(finger, state)
+        # Use finger.value to get the integer value of the enum
+        haptics_state = self.set_haptics_state(finger.value, state)
 
         # Start encoding the pressure data
         frequency = 0
@@ -206,6 +206,7 @@ class Haptics:
         print(f"Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
         return data
 
+
     def hexr_pressure_multiple(self, fingers, states, intensities, speeds):
         haptics_frame = []
 
@@ -214,6 +215,8 @@ class Haptics:
             haptics_data = self.hexr_pressure(finger, state, intensity, speed)
             haptics_frame.extend(haptics_data)
 
+        # Print the haptics_frame for debugging
+        print("Haptics Frame:", haptics_frame)
         # Return the full haptics frame as bytes
         return bytes(haptics_frame)
 

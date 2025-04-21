@@ -21,20 +21,19 @@ async def connect_and_trigger_haptics():
                 Haptics.Finger.Middle,
                 Haptics.Finger.Ring,
                 Haptics.Finger.Pinky,
-                Haptics.Finger.Palm
-            ]
+                Haptics.Finger.Palm  ]
             states = [True, True, True, True, True, True]
-            intensities = [0.7, 0.7, 0.7, 0.7, 0.7, 0.7]
+            intensities = [1, 1, 1, 1, 1, 1]
             speeds = [1, 1, 1, 1, 1, 1]
             
             # Get the haptics data
             haptics_data = haptics.hexr_pressure_multiple(fingers, states, intensities, speeds)
-            print(f"Applying haptics to fingers: {haptics_data}")
+
             print("Hex data being sent:", " ".join(f"{byte:02X}" for byte in haptics_data))
 
             # Attempt to write haptics data to the GATT characteristic
             try:
-                await client.write_gatt_char(characteristicUUID, bytearray(haptics_data))
+                await client.write_gatt_char(characteristicUUID, haptics_data)
                 print(f"Successfully applied haptics to {deviceAddress}")
                 return True
             except Exception as write_error:
