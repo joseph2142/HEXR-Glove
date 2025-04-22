@@ -5,6 +5,12 @@ from Haptics import Haptics
 deviceAddress = "EC:C9:FF:45:92:86"  # Replace with your BLE device's address
 characteristicUUID = "0000ff01-0000-1000-8000-00805f9b34fb"  # Replace with the characteristic UUID for this action
 
+# Async callback function to handle characteristic changes
+async def on_characteristic_changed(characteristic, data, haptics):
+    # Pass the data to the decode_glove_data function
+    haptics.decode_glove_data(data)
+    
+
 async def connect_and_trigger_haptics():
     airPresSourceCtrlStarted = False  # Initially, the pump has not been yet started.
     sourcePres = 255
@@ -14,14 +20,15 @@ async def connect_and_trigger_haptics():
         async with BleakClient(deviceAddress) as client:
             print(f"Connected to {deviceAddress}")
             
+            # Fix: wrap the async callback with asyncio.create_task
+            await client.start_notify(
+                characteristicUUID,
+                lambda characteristic, data: asyncio.create_task(on_characteristic_changed(characteristic, data, haptics))
+            )
+            
             # Define test inputs for haptics
-            fingers = [
-                Haptics.Finger.Thumb,
-                Haptics.Finger.Index,
-                Haptics.Finger.Middle,
-                Haptics.Finger.Ring,
-                Haptics.Finger.Pinky,
-                Haptics.Finger.Palm  ]
+            fingers = [Haptics.Finger.Thumb, Haptics.Finger.Index, Haptics.Finger.Middle, 
+                       Haptics.Finger.Ring, Haptics.Finger.Pinky, Haptics.Finger.Palm]  
             states = [True, True, True, True, True, True]
             intensities = [1, 1, 1, 1, 1, 1]
             speeds = [1, 1, 1, 1, 1, 1]
@@ -32,13 +39,15 @@ async def connect_and_trigger_haptics():
             print("Hex data being sent:", " ".join(f"{byte:02X}" for byte in haptics_data))
 
             # Attempt to write haptics data to the GATT characteristic
-            try:
+            if client.is_connected:
                 await client.write_gatt_char(characteristicUUID, haptics_data)
                 print(f"Successfully applied haptics to {deviceAddress}")
-                return True
-            except Exception as write_error:
-                print(f"Failed to write data: {write_error}")
-                return False
+            else:
+                print("Client is not connected!")
+
+            # Wait 10 seconds before ending to receive notifications
+            print("Waiting 10 seconds before ending...")
+            await asyncio.sleep(10)
 
     except Exception as e:
         print(f"Failed to apply haptics: {e}")
@@ -46,5 +55,6 @@ async def connect_and_trigger_haptics():
 
 # Run the BLE connection and control logic
 asyncio.run(connect_and_trigger_haptics())
+
 
 

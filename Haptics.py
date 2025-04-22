@@ -1,5 +1,18 @@
 class Haptics:
 
+    import struct
+
+    # Initialize pressureData and flag
+    pressure_data = [0] * 7  # Assuming 7 pressure values as in your C# code
+    flag_pressure_data_ready = False
+
+    # Initialize fingerPositionData and flag
+    finger_position_data = [0] * 5  # Assuming 5 finger position values as in your C# code
+    flag_microtube_data_ready = False
+
+    # Initialize batteryLevel variable
+    battery_level = 0.0
+
     from enum import Enum
 
     class FunIndex(Enum):
@@ -144,7 +157,6 @@ class Haptics:
     
         return haptics_state
 
-
     @staticmethod
     def air_pressure_source_control(airPresSourceCtrlStarted, sourcePres):
         try:
@@ -276,20 +288,36 @@ class Haptics:
                 self.buffer = self.buffer[1:]
 
     def frame_data_analysis(self, frame):
-        if frame[1] == 1:
+        if frame[1] == self.FunList.FI_BMP280:
             self.decode_pressure(frame)
-        elif frame[1] in [4, 5]:
+        elif frame[1] in [self.FunList.FI_MICROTUBE, self.FunList.FI_CLUTCHGOTACTIVATED]:
             self.decode_microtube(frame)
+        elif frame[1] == self.FunList.FI_BATTERY:
+            self.decode_battery_level(frame)
+
 
     def decode_pressure(self, frame):
         for i in range(7):
-            self.pressureData[i] = int.from_bytes(frame[3 + i * 5:8 + i * 5], byteorder="little", signed=True)
+            start = 3 + i * 5  # In your original code: assumes 5 bytes per value
+            # If C# is using 4-byte floats, correct offset is 3 + i * 5 → should be 3 + i * 5 **only if** actual frame structure is like that.
+            # BUT if the data is packed every 5 bytes, yet only 4 bytes are float, the 5th might be padding or checksum.
+
+            float_bytes = frame[start:start+4]  # Only 4 bytes for float
+            self.pressureData[i] = int(struct.unpack('<f', float_bytes)[0])  # '<f' = little-endian float
+
         self.flag_pressureDataReady = True
 
     def decode_microtube(self, frame):
         for i in range(5):
-            self.fingerPositionData[i] = int.from_bytes(frame[3 + i * 5:8 + i * 5], byteorder="little", signed=True)
+            start = 3 + i * 5  # 3, 8, 13, 18, 23
+            self.fingerPositionData[i] = int.from_bytes(frame[start:start+4], byteorder="little", signed=True)
+
         self.flag_MicrotubeDataReady = True
+
+    def decode_battery_level(self, frame):
+        # Convert 4 bytes starting from index 3 to float (same as BitConverter.ToSingle in C#)
+        import struct
+        self.batteryLevel = struct.unpack('<f', frame[3:7])[0]
 
     def clamp(self, lower, upper, input):
         if input > upper:
@@ -305,6 +333,8 @@ class Haptics:
 
         output = (bound2 - bound1) * (input - pre_bound1) / (pre_bound2 - pre_bound1) + bound1
         return output
+
+
 
 import struct
 
