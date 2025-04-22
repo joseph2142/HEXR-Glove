@@ -215,7 +215,7 @@ class Haptics:
         data = self.encode.add_fun(4)  # FI = 4
         self.encode.clear_list()  # Clear the encoding list for the next operation
 
-        print(f"Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
+        print(f"Finger Type: {finger.name}, Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
         return data
 
 
@@ -227,8 +227,6 @@ class Haptics:
             haptics_data = self.hexr_pressure(finger, state, intensity, speed)
             haptics_frame.extend(haptics_data)
 
-        # Print the haptics_frame for debugging
-        print("Haptics Frame:", haptics_frame)
         # Return the full haptics frame as bytes
         return bytes(haptics_frame)
 
