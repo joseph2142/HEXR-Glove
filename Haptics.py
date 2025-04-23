@@ -1,6 +1,8 @@
+
 class Haptics:
 
     import struct
+    from enum import Enum
 
     # Initialize pressureData and flag
     pressure_data = [0] * 7  # Assuming 7 pressure values as in your C# code
@@ -13,7 +15,6 @@ class Haptics:
     # Initialize batteryLevel variable
     battery_level = 0.0
 
-    from enum import Enum
 
     class FunIndex(Enum):
         FI_AIR_PRESSURE = 0x01
@@ -27,7 +28,6 @@ class Haptics:
         FI_SET_VIB_SPEED = 0x09
         FI_SET_PULSE_SPEED = 0x0a
 
-    from enum import Enum
 
     class FunList(Enum):
         FI_BMP280 = 0x01
@@ -196,7 +196,7 @@ class Haptics:
         # Use finger.value to get the integer value of the enum
         haptics_state = self.set_haptics_state(finger.value, state)
 
-        # Start encoding the pressure data
+        # Start encoding the frequency data 0 for normal haptics
         frequency = 0
         self.encode.add_f32(frequency)
         self.encode.add_u8(haptics_state[0])  # which finger
@@ -218,6 +218,55 @@ class Haptics:
         print(f"Finger Type: {finger.name}, Intensity: {intensity}, Pressure: {pressure}, Speed: {speed}")
         return data
 
+    def hexr_vibrations(self, finger, state, frequency, intensity, peakRatio, speed, endIntensity):
+        hapticsState =  self.set_haptics_state(finger.value, state)
+
+        frequency = self.clamp(0.1, 2, frequency)
+        self.encode.add_f32(frequency)
+        self.encode.add_u8(hapticsState[0])             # which finger
+        self.encode.add_u8(hapticsState[1])             # enter, stay or exit
+        intensity = self.clamp(0.1, 1.0, intensity)
+        pressure = self.liner_mapping(0.1, 1.0, intensity, 15, 50)
+        peakRatio = self.clamp(0.2, 0.8, peakRatio)
+        peakRatio = peakRatio * 100
+        self.encode.add_f32(pressure)
+        self.encode.add_u8(int(peakRatio))
+        speed = self.clamp(0.1, 1.0, speed)
+        speed = self.liner_mapping(0.1, 1.0, speed, 0.1, 1)
+        speed *= 100
+        self.encode.add_u8(int(speed))
+        endPressure = 0
+        if endIntensity < 0.1:
+            endIntensity = 0
+            endPressure = 0
+        else:
+            endIntensity = self.clamp(0.1, 1.0, endIntensity)
+            endPressure = self.liner_mapping(0.1, 1.0, endIntensity, 15, 50)
+        self.encode.add_f32(endPressure)
+        data = self.encode.add_fun(Haptics.FunIndex.FI_SET_VIB_SPEED.value)       # FI = 9
+        self.encode.clear_list()
+
+        print(f"Frequency: {frequency}\tPressure: {pressure}\tPeakRatio: {peakRatio}\tSpeed: {speed}")
+
+        return data
+
+    def hexr_vibrations_multiple(self, fingers, states, frequencies, intensities, peakRatios, speeds, endIntensities):
+    
+        hapticsFrame = bytearray()
+    
+        for i in range(len(fingers)):
+            finger_data = self.hexr_vibrations(
+                fingers[i],
+                states[i],
+                frequencies[i],
+                intensities[i],
+                peakRatios[i],
+                speeds[i],
+                endIntensities[i]
+            )
+            hapticsFrame.extend(finger_data)
+    
+        return bytes(hapticsFrame)
 
     def hexr_pressure_multiple(self, fingers, states, intensities, speeds):
         haptics_frame = []
@@ -229,6 +278,7 @@ class Haptics:
 
         # Return the full haptics frame as bytes
         return bytes(haptics_frame)
+
 
     def apply_haptics(self, clutchState, targetPres, compensateHysteresis):
         if not Haptics.is_hand_valid(self.whichHand):
@@ -331,7 +381,6 @@ class Haptics:
 
         output = (bound2 - bound1) * (input - pre_bound1) / (pre_bound2 - pre_bound1) + bound1
         return output
-
 
 
 import struct

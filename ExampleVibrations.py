@@ -29,11 +29,13 @@ async def connect_and_trigger_haptics():
             fingers = [Haptics.Finger.Thumb, Haptics.Finger.Index, Haptics.Finger.Middle, 
                        Haptics.Finger.Ring, Haptics.Finger.Pinky, Haptics.Finger.Palm]  
             states = [True, True, True, True, True, True]
-            intensities = [1, 1, 1, 1, 1, 1] # 0.1 lowest Intensities and 1 is the Max Intensities
+            intensities = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2] # 0.1 lowest Intensities and 1 is the Max Intensities
             speeds = [1, 1, 1, 1, 1, 1] # 0.1 lowest Speed and 1 is the Max Speed
-            
+            frequency = [1,1,1,1,1,1] # 0.1 lowest frequency and 2 is the Max Frequency
+            peakRatio = [0.8,0.8,0.8,0.8,0.8,0.8] #Set peak ratio from 0.2 to 0.8
+
             # Get the haptics data
-            haptics_data = haptics.hexr_pressure_multiple(fingers, states, intensities, speeds)
+            haptics_data = haptics.hexr_vibrations_multiple(fingers, states,frequency, intensities,peakRatio, speeds,intensities)
             print("Hex data being sent:", " ".join(f"{byte:02X}" for byte in haptics_data))
 
             # Attempt to write haptics data to the GATT characteristic
@@ -51,9 +53,11 @@ async def connect_and_trigger_haptics():
             states = [False, False, False, False, False, False]
             intensities = [0, 0, 0, 0, 0, 0]
             speeds = [0, 0, 0, 0, 0, 0]
-            
+            frequency = [0,0,0,0,0,0]
+            peakRatio = [0,0,0,0,0,0]
+
             # Get the haptics data to turn it off
-            haptics_data = haptics.hexr_pressure_multiple(fingers, states, intensities, speeds)
+            haptics_data = haptics.hexr_vibrations_multiple(fingers, states,frequency, intensities,peakRatio, speeds,intensities)
             print("Hex data being sent:", " ".join(f"{byte:02X}" for byte in haptics_data))
 
             # Attempt to write haptics data to the GATT characteristic
