@@ -11,8 +11,9 @@ This project is a Python-based implementation for controlling a Bluetooth-enable
 
 ## Project Structure
 
-- **`ExampleHaptics.py`**: A sample Python script demonstrating how to establish a BLE connection, control air pressure, and apply haptics to a specific finger (the Index finger in this case).
-- **`Haptics.py`**: Contains the core logic for interacting with the glove, including applying haptics, managing clutch states, and calculating valve timings for air pressure control.
+- **`ExampleHaptics.py`**: A sample Python script demonstrating how to establish a BLE connection, control air pressure, and apply haptics to a all finger and removing haptics after 5 sec.
+- **`Haptics.py`**: Contains the core logic for interacting with the glove, including applying haptics/vibrations, managing clutch states, and calculating valve timings for air pressure control.
+- **`ComprehensiveTestApp.py`**: An interactive Python Script to demonstrate auto BLE connection and allow users to apply custom haptics and custom vibrations to test the glove functions.
   
 ## Installation
 
