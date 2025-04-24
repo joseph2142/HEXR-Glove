@@ -9,11 +9,12 @@ This project is a Python-based implementation for controlling a Bluetooth-enable
 - **Bluetooth Communication**: Utilizes the `bleak` Python library to connect and send data to the glove device via BLE.
 - **Haptics Timing**: Dynamically calculates valve timings to provide accurate and smooth haptic feedback.
 
-## Project Structure
+## Project Structure 📚
 
-- **`ExampleHaptics.py`**: A sample Python script demonstrating how to establish a BLE connection, control air pressure, and apply haptics to a all finger and removing haptics after 5 sec.
-- **`Haptics.py`**: Contains the core logic for interacting with the glove, including applying haptics/vibrations, managing clutch states, and calculating valve timings for air pressure control.
 - **`ComprehensiveTestApp.py`**: An interactive Python Script to demonstrate auto BLE connection and allow users to apply custom haptics and custom vibrations to test the glove functions.
+
+<details>
+ <summary>Installation</summary>  
   
 ## Installation
 
@@ -32,12 +33,31 @@ To run this project, you'll need to clone the repository and install the necessa
     # Use the AddressDiscovery.py file to recover your device's address and then input them into ExampleHaptics.py
    deviceAddress = ""  # Replace with your BLE device's address
     characteristicUUID = "0000ff01-0000-1000-8000-00805f9b34fb"  # Our device's characteristics UUID
-   
-## Usage
+</details>
+<details>
+ <summary> Haptics.py Explained</summary>  
+
+## `Haptics.py` script 
+#### The `Haptics.py` script contains the core logic for interacting with the glove, including applying haptics/vibrations, and calculating valve timings for air pressure control.
+| Feature                  | Description                                 | Input                                                                                                                  |
+|--------------------------|---------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `hexr_pressure`          | Apply pressure to a single finger           | - `finger`: Use the `haptics.Finger` enum to select the finger<br>- `state`: `true` to apply, `false` to release<br>- `intensity`: 0.1 = lightest, 1 = strongest<br>- `speed`: 0.1 = slowest, 1 = fastest |
+| `hexr_pressure_multiple` | Apply pressure to multiple fingers          | Same as `hexr_pressure`, but accepts **arrays** for batch processing.                                                 |
+| `hexr_vibrations`        | Apply vibration to a single finger          | - `finger`: Use the `haptics.Finger` enum to select the finger<br>- `state`: `true` to apply, `false` to stop<br>- `frequency`: 0.1 = slowest, 2 = fastest<br>- `intensity`: 0.1 = weakest, 1 = strongest<br>- `peakRatio`: 0.2 = smoothest, 0.8 = sharpest<br>- `speed`: 0.1 = slowest, 1 = fastest |
+| `hexr_vibrations_multiple` | Apply vibrations to multiple fingers      | Same as `hexr_vibrations`, but accepts **arrays** for batch processing.                                               |
+
+
+</details>
+
+<details>
+ <summary> ExampleHaptics.py Explained</summary>  
+
+## **`ExampleHaptics.py`** script
+#### A sample Python script demonstrating how to establish a BLE connection, control air pressure, and apply haptics to a all finger and removing haptics after 5 sec.
 
 To use this project, run the `ExampleHaptics.py` script, which will connect to the HaptGlove device, start air pressure control, and apply haptics feedback to the Index finger.
 
-### Steps to Run:
+#### Steps to Run:
 
 1. **Run the Example Script**:
 
@@ -48,12 +68,18 @@ To use this project, run the `ExampleHaptics.py` script, which will connect to t
 
    - **Connecting to the BLE Device**:
      Using the `bleak` library, we establish a connection with the BLE-enabled glove using its Bluetooth address.
+     Bluetooth address need to be updated correctly using the above instructions.
 
-   - **Start Air Pressure Control**:
-     The pump is controlled using the `Haptics.air_pressure_source_control()` method. The pressure source is initiated to start pumping air into the reservoir. The example uses a `sourcePres` value of `70`, which is adjustable depending on the pressure needed.
+   - **On_Characteristic Changed**:
+     Establish the data retrieval from characteristic changed from the device.
 
-   - **Applying Haptics to Index Finger**:
-     The haptics feedback is applied to the index finger using the `apply_haptics()` method. The target pressure is set, and the clutch state is adjusted to enable the haptics.
+   - **Applying Haptics**:
+     The haptics feedback is applied to the all finger using the `hexr_pressure_multiple()` method.
+     The `hexr_pressure_multiple` method takes in 4 parameters
+     - fingers = [Haptics.Finger.Thumb, Haptics.Finger.Index, Haptics.Finger.Middle,Haptics.Finger.Ring, Haptics.Finger.Pinky, Haptics.Finger.Palm]
+     - states = [True, True, True, True, True, True] : True for trigger haptics , False to not trigger haptics
+     - intensities = [1, 1, 1, 1, 1, 1] # 0.1 lowest Intensities and 1 is the Max Intensities
+     - speeds = [1, 1, 1, 1, 1, 1] # 0.1 lowest Speed and 1 is the Max Speed
 
    - **Haptics Parameters**:
      - `clutch_state`: The state of the clutch for the specified finger (in this case, "Index").
@@ -62,17 +88,8 @@ To use this project, run the `ExampleHaptics.py` script, which will connect to t
 
    - **Writing Data to the BLE Characteristic**:
      The script sends data to the glove’s BLE characteristic to trigger haptics on the specified finger. This is done using `write_gatt_char()` to send the haptics data.
+</details>
 
-### Customization
-
-You can modify the finger that receives haptics feedback by changing the finger parameter in the `set_clutch_state_single()` method. For example, to apply haptics to the thumb, replace `"Index"` with `"Thumb"`.
-
-Similarly, you can adjust the `target_pressure` value and `compensate_hysteresis` flag to fine-tune the haptics behavior.
-
-To remove haptics from a given finger,
-you can modify the boolean in the
-set_clutch_state function call to False
-and then trigger haptics again for the given finger with the target pressure set to zero.
 
 ### Troubleshooting
 
