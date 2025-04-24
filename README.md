@@ -1,4 +1,4 @@
-# HaptGlove Python Project
+# HaptGlove Python Project 🐍
 
 This project is a Python-based implementation for controlling a Bluetooth-enabled Haptic Glove device. It allows for applying air pressure-based haptics to specific fingers, integrating BLE (Bluetooth Low Energy) for communication with the glove. The project demonstrates how to start air pressure control and apply haptics feedback on various fingers using the `Haptics` class.
 
@@ -39,7 +39,7 @@ To run this project, you'll need to clone the repository and install the necessa
 
 ## `Haptics.py` script 
 #### The `Haptics.py` script contains the core logic for interacting with the glove, including applying haptics/vibrations, and calculating valve timings for air pressure control.
-| Feature                  | Description                                 | Input                                                                                                                  |
+| Function                  | Description                                 | Input                                                                                                                  |
 |--------------------------|---------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | `hexr_pressure`          | Apply pressure to a single finger           | - `finger`: Use the `haptics.Finger` enum to select the finger<br>- `state`: `true` to apply, `false` to release<br>- `intensity`: 0.1 = lightest, 1 = strongest<br>- `speed`: 0.1 = slowest, 1 = fastest |
 | `hexr_pressure_multiple` | Apply pressure to multiple fingers          | Same as `hexr_pressure`, but accepts **arrays** for batch processing.                                                 |
@@ -90,9 +90,14 @@ To use this project, run the `ExampleHaptics.py` script, which will connect to t
      The script sends data to the glove’s BLE characteristic to trigger haptics on the specified finger. This is done using `write_gatt_char()` to send the haptics data.
 </details>
 
+</details>
 
+<details>
+ <summary> Troubleshooting</summary>  
+ 
 ### Troubleshooting
 
 - Ensure that the device's BLE address and characteristic UUID are correct.
   - If you encounter connectivity issues, check if Bluetooth permissions are enabled on your system.
   - Verify that the BLE device is powered on and within range of the computer running the script.
+</details>
