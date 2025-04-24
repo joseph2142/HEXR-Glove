@@ -58,10 +58,10 @@ async def connect_and_interact():
             await client.start_notify(characteristicUUID, on_characteristic_changed)
 
             while True:
-                print("\nType '1' to activate haptics, '2' to activate vibrations, '3' to remove pressure or vibration, '4' to get information or '5' to quit.")
+                print("\nType '1' to activate haptics, '2' to activate vibrations, '3' to remove pressure or vibration or '4' to quit.")
                 command = input("Command: ").strip().lower()
 
-                if command == "5": #Exit command
+                if command == "4": #Exit command
                     print("Exiting program...")
                     break
 
@@ -109,10 +109,6 @@ async def connect_and_interact():
                     await client.write_gatt_char(characteristicUUID, haptics_data)
                     print("All haptics/vibrations stopped.")
 
-                elif command == "4":
-                    print("Device Information:")
-                    print(f"Battery Level: {haptics.battery_level}%")
-                    print(f"Pressure Data: {haptics.pressure_data}%")
                 else:
                     print("Unknown command.")
 

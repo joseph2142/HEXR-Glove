@@ -10,6 +10,8 @@ async def on_characteristic_changed(characteristic, data, haptics):
     # Pass the data to the decode_glove_data function
     haptics.decode_glove_data(data)
 
+
+    
 async def connect_and_trigger_haptics():
     airPresSourceCtrlStarted = False  # Initially, the pump has not been yet started.
     sourcePres = 255

@@ -331,6 +331,12 @@ class Haptics:
         while len(self.buffer) >= 5:
             if self.buffer[1] in Haptics.fun_list:
                 length = self.buffer[0]
+                
+                # Add length validation like C# version
+                if length < 1 or length > len(self.buffer):
+                    self.buffer.pop(0)  # Remove bad frame length byte
+                    continue
+                    
                 if len(self.buffer) < length:
                     break
 
@@ -339,15 +345,17 @@ class Haptics:
                     checksum ^= self.buffer[i]
 
                 if checksum != self.buffer[length - 1]:
-                    self.buffer = self.buffer[length:]
+                    del self.buffer[:length]  # More efficient than slice
                 else:
                     self.oneFrame = self.buffer[:length]
-                    self.buffer = self.buffer[length:]
+                    del self.buffer[:length]
                     self.frame_data_analysis(self.oneFrame)
             else:
-                self.buffer = self.buffer[1:]
+                self.buffer.pop(0)  # More efficient than slice
+
 
     def frame_data_analysis(self, frame):
+        print(f"[DEBUG] Function ID: 0x{frame[1]:02x} (Decimal: {frame[1]})")
         if frame[1] == self.FunList.FI_BMP280:
             self.decode_pressure(frame)
         elif frame[1] in [self.FunList.FI_MICROTUBE, self.FunList.FI_CLUTCHGOTACTIVATED]:
@@ -357,6 +365,7 @@ class Haptics:
 
 
     def decode_pressure(self, frame):
+        print(f"Decoding Pressure")
         for i in range(7):
             start = 3 + i * 5  # In your original code: assumes 5 bytes per value
             # If C# is using 4-byte floats, correct offset is 3 + i * 5 → should be 3 + i * 5 **only if** actual frame structure is like that.
@@ -375,6 +384,7 @@ class Haptics:
         self.flag_MicrotubeDataReady = True
 
     def decode_battery_level(self, frame):
+        print(f"Decoding Battery")
         # Convert 4 bytes starting from index 3 to float (same as BitConverter.ToSingle in C#)
         import struct
         self.batteryLevel = struct.unpack('<f', frame[3:7])[0]
@@ -420,6 +430,8 @@ class Haptics:
 
         return [pressure, peak_ratio]
 
+    def get_battery(self):
+        return { self.battery_level}
 import struct
 
 class Encode:
