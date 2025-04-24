@@ -11,8 +11,6 @@ This project is a Python-based implementation for controlling a Bluetooth-enable
 
 ## Project Structure 📚
 
-- **`ComprehensiveTestApp.py`**: An interactive Python Script to demonstrate auto BLE connection and allow users to apply custom haptics and custom vibrations to test the glove functions.
-
 <details>
  <summary>Installation</summary>  
   
@@ -35,7 +33,7 @@ To run this project, you'll need to clone the repository and install the necessa
     characteristicUUID = "0000ff01-0000-1000-8000-00805f9b34fb"  # Our device's characteristics UUID
 </details>
 <details>
- <summary> Haptics.py Explained</summary>  
+ <summary> Haptics.py </summary>  
 
 ## `Haptics.py` script 
 #### The `Haptics.py` script contains the core logic for interacting with the glove, including applying haptics/vibrations, and calculating valve timings for air pressure control.
@@ -50,7 +48,7 @@ To run this project, you'll need to clone the repository and install the necessa
 </details>
 
 <details>
- <summary> ExampleHaptics.py Explained</summary>  
+ <summary> ExampleHaptics.py </summary>  
 
 ## **`ExampleHaptics.py`** script
 #### A sample Python script demonstrating how to establish a BLE connection, control air pressure, and apply haptics to a all finger and removing haptics after 5 sec.
@@ -90,6 +88,15 @@ To use this project, run the `ExampleHaptics.py` script, which will connect to t
      The script sends data to the glove’s BLE characteristic to trigger haptics on the specified finger. This is done using `write_gatt_char()` to send the haptics data.
 </details>
 
+</details>
+
+<details>
+ <summary> ComprehensiveTestApp.py </summary>  
+ 
+## **`ComprehensiveTestApp.py`** script
+#### An interactive Python Script to demonstrate auto BLE connection and allow users to apply custom haptics and custom vibrations to test the glove functions.
+
+#### Run the **`ComprehensiveTestApp.py`** script and follow the console instruction to interact with the programme.
 </details>
 
 <details>
