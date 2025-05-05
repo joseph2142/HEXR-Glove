@@ -1,4 +1,4 @@
-# HaptGlove Python Project 🐍
+# HexR Python Project 🐍
 
 This project is a Python-based implementation for controlling a Bluetooth-enabled Haptic Glove device. It allows for applying air pressure-based haptics to specific fingers, integrating BLE (Bluetooth Low Energy) for communication with the glove. The project demonstrates how to start air pressure control and apply haptics feedback on various fingers using the `Haptics` class.
 
