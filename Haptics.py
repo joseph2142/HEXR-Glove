@@ -355,7 +355,7 @@ class Haptics:
 
 
     def frame_data_analysis(self, frame):
-        print(f"[DEBUG] Function ID: 0x{frame[1]:02x} (Decimal: {frame[1]})")
+        #print(f"[DEBUG] Function ID: 0x{frame[1]:02x} (Decimal: {frame[1]})")
         if frame[1] == self.FunList.FI_BMP280:
             self.decode_pressure(frame)
         elif frame[1] in [self.FunList.FI_MICROTUBE, self.FunList.FI_CLUTCHGOTACTIVATED]:

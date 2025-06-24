@@ -2,7 +2,7 @@ import asyncio
 from bleak import BleakClient
 from Haptics import Haptics
 
-deviceAddress = "EC:C9:FF:45:92:86"  # Replace with your BLE device's address
+deviceAddress = "EC:C9:FF:45:9D:A6"  # Replace with your BLE device's address
 characteristicUUID = "0000ff01-0000-1000-8000-00805f9b34fb"  # Replace with the characteristic UUID for this action
 
 # Async callback function to handle characteristic changes
